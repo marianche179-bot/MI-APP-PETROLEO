@@ -58,4 +58,4 @@ if st.button("GENERAR DIAGNÓSTICO OPERATIVO"):
     if va >= 120:
         st.success("✅ **ESTADO: OPERACIÓN SEGURA.** La velocidad anular es suficiente para el acarreo de ripios.")
     else:
-        st.error("⚠️ **ALERTA DE SEGURIDAD.** Velocidad anular por debajo del límite crítico (120 ft/
+        st.error("⚠️ ALERTA DE SEGURIDAD. Velocidad anular por debajo del límite crítico (120 ft/min).")
