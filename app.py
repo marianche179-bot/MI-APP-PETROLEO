@@ -1,61 +1,70 @@
 import streamlit as st
+import pandas as pd
+import plotly.express as px
 
-# Configuración visual de la aplicación
-st.set_page_config(page_title="FluidMaster Pro", page_icon="💧", layout="wide")
+# 1. CONFIGURACIÓN DE LA PÁGINA
+st.set_page_config(page_title="FluidMaster Pro - Marian Lisboa", layout="wide")
 
-# Estilos para que se vea más profesional
-st.markdown("""
-    <style>
-    .main { background-color: #f8fafc; }
-    .stButton>button { width: 100%; border-radius: 10px; height: 3em; background-color: #0284c7; color: white; font-weight: bold; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    </style>
-    """, unsafe_allow_html=True)
+# 2. ENCABEZADO INSTITUCIONAL (Logo UDO y Nombre)
+col_logo, col_titulo = st.columns([1, 4])
 
-st.title("💧 FluidMaster Pro: Ingeniería de Lodos")
-st.write("Software especializado en Reología e Hidráulica de Perforación")
-st.divider()
+with col_logo:
+    # URL de un logo de la UDO (puedes cambiarla por una directa si tienes el link)
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Logo_UDO.svg/1200px-Logo_UDO.svg.png", width=100)
 
-# Layout de columnas para la entrada de datos
-col_input1, col_input2 = st.columns(2)
-
-with col_input1:
-    st.subheader("📊 Datos del Viscosímetro")
-    l600 = st.number_input("Lectura a 600 RPM", value=40.0, step=0.1)
-    l300 = st.number_input("Lectura a 300 RPM", value=25.0, step=0.1)
-    densidad = st.number_input("Densidad del Lodo (ppg)", value=9.5, step=0.1)
-
-with col_input2:
-    st.subheader("🏗️ Geometría del Pozo")
-    diam_hoyo = st.number_input("Diámetro del Hoyo (pulg)", value=8.5, step=0.1)
-    diam_tubo = st.number_input("Diámetro ext. Tubería (pulg)", value=5.0, step=0.1)
-    caudal = st.number_input("Caudal de Bombeo (GPM)", value=300.0, step=10.0)
+with col_titulo:
+    st.title("FluidMaster Pro v2.0")
+    st.subheader("Ingeniería de Fluidos de Perforación | UDO Anzoátegui")
+    st.write(f"**Desarrollado por:** Ing. Marian Lisboa")
 
 st.divider()
 
-# Botón para ejecutar el software
-if st.button("GENERAR DIAGNÓSTICO OPERATIVO"):
-    # --- MOTOR DE CÁLCULO ---
-    # Reología (Modelo de Bingham)
-    pv = l600 - l300
-    yp = l300 - pv
-    
-    # Hidráulica (Velocidad Anular)
-    # VA = (24.51 * Q) / (Dh^2 - Dp^2)
-    va = (24.51 * caudal) / (diam_hoyo**2 - diam_tubo**2)
-    
-    # --- MOSTRAR RESULTADOS ---
-    st.write("### Resultados Técnicos")
-    res1, res2, res3 = st.columns(3)
-    
-    res1.metric("Viscosidad Plástica (PV)", f"{pv} cp")
-    res2.metric("Punto Cedente (YP)", f"{yp} lb/100ft²")
-    res3.metric("Velocidad Anular (VA)", f"{round(va, 2)} ft/min")
-    
-    st.divider()
-    
-    # Evaluación de Seguridad
-    if va >= 120:
-        st.success("✅ **ESTADO: OPERACIÓN SEGURA.** La velocidad anular es suficiente para el acarreo de ripios.")
-    else:
-        st.error("⚠️ ALERTA DE SEGURIDAD. Velocidad anular por debajo del límite crítico (120 ft/min).")
+# 3. ENTRADA DE DATOS (En el lateral para que no estorbe)
+st.sidebar.header("⚙️ Parámetros de Entrada")
+l600 = st.sidebar.number_input("Lectura 600 RPM", value=40.0)
+l300 = st.sidebar.number_input("Lectura 300 RPM", value=25.0)
+caudal = st.sidebar.number_input("Caudal (GPM)", value=300.0)
+dh = st.sidebar.number_input("Diámetro Hoyo (pulg)", value=8.5)
+dp = st.sidebar.number_input("Diámetro Tubería (pulg)", value=5.0)
+
+# 4. CÁLCULOS TÉCNICOS
+pv = l600 - l300
+yp = l300 - pv
+va = (24.5 * caudal) / (dh**2 - dp**2)
+
+# 5. VISUALIZACIÓN DE RESULTADOS
+st.header("📊 Diagnóstico Operativo")
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Viscosidad Plástica (PV)", f"{pv} cp")
+col2.metric("Punto Cedente (YP)", f"{yp} lb/100ft²")
+col3.metric("Velocidad Anular (VA)", f"{round(va, 2)} ft/min")
+
+# 6. GRÁFICA DE SEGURIDAD (Aquí es donde deja de ser simple)
+st.subheader("🚀 Monitor de Limpieza de Hoyo")
+
+# Crear datos para la gráfica
+df_grafica = pd.DataFrame({
+    'Parámetro': ['Tu Velocidad', 'Límite Crítico'],
+    'Velocidad (ft/min)': [va, 120]
+})
+
+# Color dinámico: verde si es seguro, rojo si es peligroso
+color_grafica = ["#00CC96" if va >= 120 else "#EF553B", "#636EFA"]
+
+fig = px.bar(df_grafica, x='Parámetro', y='Velocidad (ft/min)', 
+             color='Parámetro', 
+             color_discrete_sequence=color_grafica,
+             text_auto=True)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# 7. ALERTAS FINALES
+if va >= 120:
+    st.success("✅ **LIMPIEZA EFICIENTE:** El lodo tiene la velocidad necesaria para acarrear los ripios.")
+    st.balloons()
+else:
+    st.error("⚠️ **ALERTA DE SEGURIDAD:** Velocidad por debajo de 120 ft/min. Riesgo de atascamiento.")
+
+st.sidebar.markdown("---")
+st.sidebar.info("Criterio técnico: Modelo Plástico de Bingham")
